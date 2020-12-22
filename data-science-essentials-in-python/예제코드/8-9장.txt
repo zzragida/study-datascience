@@ -1,0 +1,217 @@
+8장
+
+내려받은 예제 파일에 실습을 위한 pyplot-images.py 파일이 있습니다.
+
+pyplot-images.py 
+
+import matplotlib, matplotlib.pyplot as plt
+import pickle, pandas as pd
+
+# 앞에서 NIAAA 데이터 프레임을 pickle에 저장해 두었다.
+alco = pickle.load(open("alco.pickle", "rb"))
+del alco["Total"]
+columns, years = alco.unstack().columns.levels
+
+# 파일에서 축약된 주 이름을 읽어온다.
+states = pd.read_csv("states.csv", index_col="State")
+
+# 2009년을 기준으로 알코올 소비량을 정렬한다.
+frames = [pd.merge(alco[column].unstack(), states,
+                   left_index=True, right_index=True).sort_values(2009) 
+          for column in columns]
+
+# 데이터의 총 기간은 몇 년인가?
+span = max(years) - min(years) + 1
+
+# 적절해보이는 스타일을 선택한다.
+matplotlib.style.use("ggplot")
+
+STEP = 5
+# subplot에 각 데이터 프레임을 시각화한다.
+for pos, (draw, style, column, frame) in enumerate(zip(
+        (plt.contourf, plt.contour, plt.imshow), # (1)
+        (plt.cm.autumn, plt.cm.cool, plt.cm.spring), 
+        columns, frames)):
+    
+    # 2개 행과 2개 열을 가진 subplot을 선택한다.
+    plt.subplot(2, 2, pos + 1) # (2)
+
+    # 데이터 프레임을 시각화한다.
+    draw(frame[frame.columns[:span]], cmap=style, aspect="auto") # (3)
+
+    # 플롯을 꾸민다.
+    plt.colorbar() # (4)
+    plt.title(column)
+    plt.xlabel("Year")
+    plt.xticks(range(0, span, STEP), frame.columns[:span:STEP])
+    plt.yticks(range(0, frame.shape[0], STEP), frame.Postal[::STEP])
+    plt.xticks(rotation=-17)
+
+plt.tight_layout()
+plt.savefig("pyplot-all.pdf")
+#plt.show()
+---------------------------------------
+
+
+내려받은 예제 파일에 실습을 위한 pyplot-legend.py 파일이 있습니다.
+
+pyplot-legend.py
+
+import matplotlib, matplotlib.pyplot as plt
+import pickle, pandas as pd
+
+# 앞에서 NIAAA 데이터 프레임을 pickle로 저장해 두었다.
+alco = pickle.load(open("alco.pickle", "rb"))
+
+# 플로팅에 쓸 데이터를 준비한다.
+BEVERAGE = "Beer"
+years = alco.index.levels[1]
+states = ("New Hampshire", "Colorado", "Utah")
+
+# 적절한 스타일을 고른다.
+plt.xkcd()
+matplotlib.style.use("ggplot")
+
+# 차트를 그린다.
+for state in states:
+    ydata = alco.ix[state][BEVERAGE]
+    plt.plot(years, ydata, "-o")
+    # 화살표와 메모를 추가한다.
+    plt.annotate(s="Peak", xy=(ydata.argmax(), ydata.max()),
+                 xytext=(ydata.argmax() + 0.5, ydata.max() + 0.1),
+                 arrowprops={"facecolor": "black", "shrink": 0.2})
+
+# 레이블과 범례를 추가한다.
+plt.ylabel(BEVERAGE + " consumption")
+plt.title("And now in xkcd...")
+plt.legend(states)
+
+plt.savefig("pyplot-legend-xkcd.pdf")
+---------------------------------------
+
+
+내려받은 예제 파일에 실습을 위한 scatter-plot.py 파일이 있습니다.
+
+scatter-plot.py
+
+import matplotlib, matplotlib.pyplot as plt
+import pickle, pandas as pd
+
+# 앞에서 NIAAA 데이터 프레임을 pickle로 저장해 두었다.
+alco = pickle.load(open("alco.pickle", "rb"))
+
+# 적절한 스타일을 고른다.
+matplotlib.style.use("ggplot")
+
+# 스캐터 플롯을 그린다.
+STATE = "New Hampshire"
+statedata = alco.ix[STATE].reset_index()
+statedata.plot.scatter("Beer", "Wine", c="Year", s=100, cmap=plt.cm.autumn)
+
+plt.title("%s: From Beer to Wine in 32 Years" % STATE)
+plt.savefig("scatter-plot.pdf")
+---------------------------------------
+
+
+내려받은 예제 파일에 실습을 위한 scatter-matrix.py 파일이 있습니다.
+
+scatter-matrix.py
+
+
+from pandas.tools.plotting import scatter_matrix
+import matplotlib, matplotlib.pyplot as plt
+import pickle, pandas as pd
+
+# 앞에서 NIAAA 데이터 프레임을 pickle로 저장해 두었다.
+alco = pickle.load(open("alco.pickle", "rb"))
+
+# 적절한 스타일을 고른다.
+matplotlib.style.use("ggplot")
+
+# scatter matrix를 그린다.
+STATE = "New Hampshire"
+statedata = alco.ix[STATE].reset_index()
+scatter_matrix(statedata[["Wine", "Beer", "Spirits"]],
+               s=120, c=statedata["Year"], cmap=plt.cm.autumn)
+
+plt.tight_layout()
+plt.savefig("scatter-matrix.pdf")
+
+
+
+==========================================================================
+
+9장
+
+내려받은 예제 파일에 실습을 위한 multi.txt 파일이 있습니다.
+
+multi.txt 파일을 참고합니다.
+---------------------------------------
+
+
+alco.index = multi
+
+
+beer_seriesNY = alco.ix['New York']['Beer'] 
+beer_seriesCA = alco.ix['California']['Beer']
+
+
+
+beer_seriesNY.corr(beer_seriesCA)
+
+
+beer_seriesCA.cov(beer_seriesNY)
+
+
+[x.skew() for x in (beer_seriesCA, beer_seriesNY)]
+
+
+frameNY = alco.ix['New York'] 
+frameNY.skew()
+
+
+frameNY.corr() # 모든 열 쌍의 상관성을 계산한다.
+
+
+frameNY.cov() # 모든 열 쌍의 공분산을 계산한다.
+---------------------------------------
+
+
+pop = pd.read_csv(“population2000-2009.csv”, index_col=”State”)
+
+
+# 마지막 2줄을 제거한다: 이들은 미래의 추정치다.
+pop_seriesNY = pop.ix["New York"][:-2]
+pop_seriesNY.index
+
+
+# 인덱스가 object로 되어 있으므로, Int로 타입을 변경한다.
+pop_seriesNY.index = pop_seriesNY.index.map(int)
+
+
+frameNY.ix[range(2000:2009)].corrwith(pop_seriesNY)
+
+
+
+from scipy.stats import pearsonr
+
+# 인덱스를 수동으로 정렬한다.
+pop_sorted = pop_seriesNY.sort_index()
+alco_10 = alco.ix['New York'][-10:]
+
+
+# 모든 상관성과 p값을 계산하기 위해 리스트 내포를 사용한다. 
+corrs = [(bev,) + pearsonr(alco_10[bev], pop_sorted) 
+         for bev in alco_10.columns]
+
+
+# 리스트를 데이터 프레임으로 변환한다.
+pd.DataFrame(corrs, columns=("bev", "r", "p-value")).set_index("bev")
+
+
+
+alco2009.corr()
+
+
+pearsonr(alco2009["Wine"], alco2009["Beer"])
+

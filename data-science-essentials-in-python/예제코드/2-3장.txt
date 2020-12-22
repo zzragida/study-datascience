@@ -1,0 +1,255 @@
+2장
+
+"Hello, world! \t\t\n".strip()
+---------------------------------------
+
+
+"Hello, world!".split() # Hello,와 world! 사이에 공백이 2개 있다.
+---------------------------------------
+
+
+"Hello, world!".split(" ") # Hello,와 world! 사이에 공백이 2개 있다.
+---------------------------------------
+
+
+"www.networksciencelab.com".split(".")
+---------------------------------------
+
+
+", ".join(["alpha", "bravo", "charlie", "delta"])
+---------------------------------------
+
+
+"-".join("1.617.305.1985".split("."))
+---------------------------------------
+
+
+" ".join("This string\n\r has many\t\tspaces".split())
+---------------------------------------
+
+
+"www.networksciencelab.com".find(".com")
+---------------------------------------
+
+
+"www.networksciencelab.com".count(".")
+---------------------------------------
+
+
+seq = ["alpha", "bravo", "charlie", "delta"]
+dict(enumerate(seq))
+---------------------------------------
+
+
+kseq = "abcd" # 문자열 또한, 순서열이다.
+vseq = ["alpha", "bravo", "charlie", "delta"]
+dict(zip(kseq, vseq))
+---------------------------------------
+
+
+from collections import Counter
+phrase = "a man a plan a canal panama"
+cntr = Counter(phrase.split())
+cntr.most_common()
+---------------------------------------
+
+
+cntrDict = dict(cntr.most_common())
+cntrDict
+---------------------------------------
+
+
+cntrDict['a']
+---------------------------------------
+
+
+import urllib.parse
+URL = "http://networksciencelab.com/index.html;param?foo=bar#content"
+urllib.parse.urlparse(URL)
+---------------------------------------
+
+
+
+import re
+re.split(r"\W", "Hello, world!")
+---------------------------------------
+
+
+# 인근에 위치한 비문자(non-letter)를 합친다.
+re.split(r"\W+", "Hello, world!")
+---------------------------------------
+
+
+mo = re.match(r"\d+", "067 Starts with a number")
+mo
+---------------------------------------
+
+
+mo.group()
+---------------------------------------
+
+
+print(re.match(r"\d+", "Does not start with a number"))
+---------------------------------------
+
+
+re.search(r"[a-z]+", "0010010 Has at least one 010 letter 0010010", re.I)
+---------------------------------------
+
+
+# 대소문자를 구분하는 버전
+re.search(r"[a-z]+", "0010010 Has at least one 010 letter 0010010")
+---------------------------------------
+
+
+re.findall(r"[a-z]+", "0010010 Has at least one 010 letter 0010010", re.I)
+---------------------------------------
+
+
+re.sub(r"[a-z ]+", "[...]", "0010010 has at least one 010 letter 0010010")
+---------------------------------------
+
+
+import glob
+glob.glob("*.txt")
+
+
+==========================================================================
+3장
+
+
+from bs4 import BeautifulSoup
+from urllib.request import urlopen
+
+# 문자열에서 soup을 생성한다.
+soup1 = BeautifulSoup("<HTML><HEAD><header></HEAD><body></HTML>")
+
+# 로컬 파일에서 soup을 생성한다. 내려받은 myDoc.html 파일을 사용한다.
+soup2 = BeautifulSoup(open("myDoc.html"))
+
+# 웹 문서에서 soup을 생성한다.
+# urlopen()이 “http://“를 자동으로 추가해주지 않는다는 것을 기억하자!
+soup3 = BeautifulSoup(urlopen("http://www.networksciencelab.com/"))
+---------------------------------------
+
+
+htmlString = ''' <HTML>
+  <HEAD><TITLE>My document</TITLE></HEAD>
+  <BODY>Main text.</BODY></HTML>
+'''
+soup = BeautifulSoup(htmlString)
+soup.get_text()
+---------------------------------------
+
+
+with urlopen("http://www.networksciencelab.com/") as doc: 
+  soup = BeautifulSoup(doc)
+
+links = [(link.string, link["href"])
+    for link in soup.find_all("a")
+    if link.has_attr("href")]
+links
+---------------------------------------
+
+
+import csv
+with open("Demographic_Statistics_By_Zip_Code.csv", newline='') as infile:
+  data = list(csv.reader(infile))
+---------------------------------------
+
+
+countParticipantsIndex = data[0].index("COUNT PARTICIPANTS")
+countParticipantsIndex
+---------------------------------------
+
+
+import statistics
+countParticipants = [int(row[countParticipantsIndex]) for row in data[1:]]
+print(statistics.mean(countParticipants), statistics.stdev(countParticipants))
+---------------------------------------
+
+
+import nltk
+nltk.download()
+
+wn = nltk.corpus.wordnet # 코퍼스 리더(reader)
+wn.synsets("cat")
+---------------------------------------
+
+
+wn.synset("cat.n.01").hypernyms() 
+wn.synset("cat.n.01").hyponyms()
+---------------------------------------
+
+
+x = wn.synset("cat.n.01")
+y = wn.synset("lynx.n.01")
+x.path_similarity(y)
+---------------------------------------
+
+
+[simxy.definition() for simxy in max(
+  (x.path_similarity(y), x, y)
+  for x in wn.synsets('cat')
+  for y in wn.synsets('dog')
+  if x.path_similarity(y) # synset들이 서로 관련 있는지 확인한다.
+)[1:]]
+---------------------------------------
+
+
+from nltk.tokenize import WordPunctTokenizer 
+word_punct = WordPunctTokenizer()
+text = "}Help! :))) :[ ..... :D{" 
+word_punct.tokenize(text)
+---------------------------------------
+
+
+nltk.word_tokenize(text)
+---------------------------------------
+
+
+pstemmer = nltk.PorterStemmer() 
+pstemmer.stem("wonderful")
+---------------------------------------
+
+
+lstemmer = nltk.LancasterStemmer()
+lstemmer.stem("wonderful") 
+---------------------------------------
+
+
+lemmatizer = nltk.WordNetLemmatizer()
+lemmatizer.lemmatize("wonderful")
+---------------------------------------
+
+
+nltk.pos_tag(["beautiful", "world"])
+---------------------------------------
+
+
+from bs4 import BeautifulSoup
+from collections import Counter
+from nltk.corpus import stopwords
+from nltk import LancasterStemmer
+
+# 형태소 분류기를 생성한다.
+ls = nltk.LancasterStemmer()
+
+# 파일을 읽고 soup을 만든다. 
+with open("index.html") as infile:
+  soup = BeautifulSoup(infile)
+
+# 텍스트를 추출하고 토큰화한다.
+words = nltk.word_tokenize(soup.text)
+
+# 단어를 소문자로 변환한다.
+words = [w.lower() for w in words]
+
+# 불용어를 제거하고 단어의 형태소를 추출한다.
+words = [ls.stem(w) for w in text if w not in stopwords.words("english") and w.isalnum()]
+
+# 가장 빈번하게 등장한 단어 10개를 추출한다. 
+freqs = Counter(words) 
+print(freqs.most_common(10))
+
+

@@ -1,0 +1,441 @@
+6장
+
+import pandas as pd
+# 마지막 값이 잘못되었다. 잠시 후에 이를 수정해보자.
+inflation = pd.Series((2.2, 3.4, 2.8, 1.6, 2.3, 2.7, 3.4, 3.2, 2.8, 3.8, 
+-0.4, 1.6, 3.2, 2.1, 1.5, 1.5))
+inflation
+
+
+len(inflation)
+
+
+inflation.values
+
+
+inflation.index
+
+
+inflation.index.values
+
+
+---------------------------------------
+내려받은 예제 파일에 실습을 위한 inflation.txt 파일이 있습니다.
+
+inflation.txt
+
+inflation = pd.Series({1999 : 2.2, 2000 : 3.4, 2001 : 2.8, 2002 : 1.6, 2003 : 2.3, 2004 : 2.7, 2005 : 3.4, 2006 : 3.2, 2007 : 2.8, 2008 : 3.8, 2009 : -0.4, 2010 : 1.6, 2011 : 3.2, 2012 : 2.1, 2013 : 1.5, 2014 : 1.6, 2015 : np.nan})
+---------------------------------------
+
+
+inflation
+
+
+inflation = pd.Series((2.2, 3.4, 2.8, 1.6, 2.3, 2.7, 3.4, 3.2, 2.8, 3.8, 
+-0.4, 1.6, 3.2, 2.1, 1.6, 1.5))
+inflation.index = pd.Index(range(1999, 2015))
+inflation[2015] = numpy.nan
+
+
+
+inflation.index.name = "Year" 
+inflation.name = "%"
+inflation
+
+
+inflation.head()
+
+
+inflation.tail()
+---------------------------------------
+
+
+import pandas as pd
+alco2009 = pd.read_csv("niaaa-report2009.csv", index_col="State")
+alco2009
+
+
+
+alco2009["Wine"].head()
+
+
+alco2009.Beer.tail()
+
+
+alco2009["Total"] = 0
+alco2009.head()
+
+
+alco2009.columns.values
+
+
+alco2009.index.values
+
+
+alco2009.reset_index().set_index("Beer").head()
+
+
+alco2009.ix["Nebraska"]
+
+
+"Samoa" in alco2009.index
+---------------------------------------
+
+
+alco2009 = pd.read_csv("niaaa-report2009.csv", index_col="State")
+"Samoa" in alco2009.index
+
+s_states = [state for state in alco2009.index if state[0] == 'S'] + ["Samoa"] 
+drinks = list(alco2009.columns) + ["Water"]
+nan_alco = alco2009.reindex(s_states, columns=drinks)
+nan_alco
+---------------------------------------
+
+
+alco = pd.read_csv("niaaa-report.csv", index_col=[“State”, “Year”])
+alco
+
+
+---------------------------------------
+내려받은 예제 파일에 실습을 위한 multi.txt 파일이 있습니다.
+
+multi.txt를 참고하세요.
+
+
+---------------------------------------
+
+
+alco.index = multi
+
+
+alco.ix['Wyoming'].head() 
+
+
+alco.ix['Wyoming', 1999] 
+
+
+tall_alco = alco.stack()
+tall_alco.index.names = [“State”, “Year”, “Drink”] 
+tall_alco.head(10)
+
+
+wide_alco = alco.unstack()
+wide_alco.head()
+---------------------------------------
+
+
+alco = pd.read_csv("niaaa-report.csv")
+alco.pivot("Year", "State", "Wine")
+
+
+nan_alco.dropna(how="all")
+
+
+nan_alco.dropna(how="all", axis=1)
+
+
+nan_alco.dropna()
+
+
+nan_alco.isnull()
+
+
+nan_alco.notnull()
+---------------------------------------
+
+
+sp = nan_alco['Spirits'] # 결측값이 있는 열을 선택했다.
+clean = sp.notnull() # 결측값이 없는 행
+sp[-clean] = sp[clean].mean() # 정상적인 값의 평균으로 결측치를 보정한다.
+nan_alco
+
+
+nan_alco.fillna(0)
+
+
+nan_alco.fillna(method="ffill")
+---------------------------------------
+
+
+population = pd.read_csv("population.csv", index_col="State")
+population.head()
+
+
+
+df = pd.merge(alco2009.reset_index(), 
+     population.reset_index()).set_index("State")
+df.head()
+
+
+df = pd.merge(alco2009, population, left_index=True, right_index=True)
+df.head()
+
+
+population.join(alco2009).tail(10)
+
+
+pd.concat([alco2009, population], axis=1).tail()
+---------------------------------------
+
+
+pop_ca = pd.read_csv("demo02a-eng.csv", index_col="State")
+pop_ca
+
+
+pop_na = pd.concat([population, pop_ca], keys=["US", "CA"]) 
+pop_na.index.names = ("Country", "State")
+pop_na
+---------------------------------------
+
+
+population.sort_index().head()
+
+
+population.sort_values("Population").head()
+
+
+pop_by_state = population.sort_index()
+pop_by_state.rank().head()
+---------------------------------------
+
+
+alco2009.max() 
+
+
+alco2009.min(axis=1) 
+
+
+alco2009.sum() 
+---------------------------------------
+
+
+내려받은 예제 파일에 실습을 위한 multi.txt 파일이 있습니다.
+
+multi.txt를 참고하세요.
+---------------------------------------
+
+
+alco.index = multi
+
+alco['Total'] = alco.Beer + alco.Wine + alco.Spirits
+---------------------------------------
+
+
+import pickle
+with open(“alco.pickle”, “wb”) as oFile:
+  pickle.dump(alco, oFile)
+
+alco.ix['Hawaii'].cumsum().head()
+
+
+alco.ix['Hawaii'].diff().head()
+---------------------------------------
+
+
+dna = "AGTCCGCGAATACAGGCTCGGT"
+dna_as_series = pd.Series(list(dna), name="genes")
+dna_as_series.head()
+
+
+dna_as_series.unique()
+
+
+dna_as_series.value_counts().sort_index()
+
+
+valid_nucs = list("ACGT")
+dna_as_series.isin(valid_nucs).all()
+---------------------------------------
+
+
+alco["Total"] = alco.Wine + alco.Spirits + alco.Beer
+alco.head()
+
+
+np.log10(alco.Total).head()
+
+
+dna = "AGTCCGCGAATACAGGCTCGGT"
+dna1 = dna.replace("C", "")
+dna2 = dna.replace("T", "")
+dna_as_series1 = pd.Series(list(dna1), name="genes") # C가 제거되었다.
+dna_as_series2 = pd.Series(list(dna2), name="genes") # T가 제거되었다.
+dna_as_series1.value_counts() + dna_as_series2.value_counts()
+---------------------------------------
+
+
+# “Year” 열로 데이터를 묶고자 한다.
+alco_noidx = alco.reset_index()
+sum_alco = alco_noidx.groupby("Year").sum() 
+sum_alco.tail()
+---------------------------------------
+
+
+내려받은 예제 파일에 실습을 위한 state2reg.txt 파일이 있습니다.
+
+state2reg.txt
+
+
+state2reg = {'Connecticut' : 'NORTHEAST', 'Maine' : 'NORTHEAST', 'Massachusetts' : 'NORTHEAST', 'New Hampshire' : 'NORTHEAST', 'Rhode Island' : 'NORTHEAST', 'Vermont' : 'NORTHEAST', 'New Jersey' : 'NORTHEAST', 'New York' : 'NORTHEAST','Pennsylvania': 'NORTHEAST', 'Illinois': 'MIDWEST', 'Indiana': 'MIDWEST', 'Michigan': 'MIDWEST', 'Ohio': 'MIDWEST', 'Wisconsin': 'MIDWEST', 'Iowa': 'MIDWEST', 'Kansas': 'MIDWEST',
+'Minnesota': 'MIDWEST', 'Missouri': 'MIDWEST', 'Nebraska': 'MIDWEST', 'North Dakota': 'MIDWEST', 'South Dakota': 'MIDWEST', 'Delaware': 'SOUTH',
+'District of Columbia': 'SOUTH', 'Florida': 'SOUTH', 'Georgia': 'SOUTH', 'Maryland': 'SOUTH', 'North Carolina': 'SOUTH', 'South Carolina': 'SOUTH',
+'Virginia': 'SOUTH', 'West Virginia': 'SOUTH', 'Alabama': 'SOUTH', 'Kentucky': 'SOUTH', 'Mississippi': 'SOUTH', 'Tennessee': 'SOUTH', 'Arkansas': 'SOUTH',
+'Louisiana': 'SOUTH', 'Oklahoma': 'SOUTH', 'Texas': 'SOUTH', 'Arizona': 'WEST', 'Colorado': 'WEST', 'Idaho': 'WEST', 'Montana': 'WEST', 'Nevada': 'WEST',
+'New Mexico': 'WEST', 'Utah': 'WEST', 'Wyoming': 'WEST', 'Alaska': 'WEST', 'California': 'WEST', 'Hawaii': 'WEST', 'Oregon': 'WEST', 'Washington': 'WEST'}
+---------------------------------------
+
+
+alco2009.groupby(state2reg).mean()
+
+
+cats = pd.cut(alco2009['Wine'], 3).head()
+cats
+
+
+cats = pd.cut(alco2009['Wine'], 3, labels=("Low", "Moderate", "Heavy"))
+cats.head()
+
+
+cats = pd.cut(alco2009['Wine'], 3, labels=False).head()
+cats
+
+
+quants = pd.qcut(alco2009['Wine'], 3, labels=("Low", "Moderate", "Heavy"))
+quants.head()
+
+
+pd.get_dummies(pd.Series(state2reg)).sort_index().head()
+
+
+with_state = alco2009.reset_index()
+abbrevs = with_state["State"].map(lambda x: x[:3].upper())
+abbrevs.head()
+
+
+wine_state = alco2009["Wine"] > alco2009["Wine"].mean()
+beer_state = alco2009["Beer"] > alco2009["Beer"].mean()
+pd.crosstab(wine_state, beer_state)
+---------------------------------------
+
+
+# regions.csv 파일을 읽어온다. 내려받은 region.csv 파일을 사용한다.
+regions = pd.read_csv("regions.csv",  
+                     header=None,
+                     names=("region", "division", "state"))
+state2reg_series = regions.ffill().set_index("state")["region"]
+state2reg_series.head()
+---------------------------------------
+
+
+state2reg = state2reg_series.to_dict()
+state2reg
+---------------------------------------
+
+# regions.csv를 읽어온다.
+chunker = pd.read_csv("regions.csv", chunksize=5,
+                      header=None, names=("region", "division", "state"))
+
+accum = pd.Series()
+for piece in chunker:
+    counts = piece["region"].value_counts()
+    accum = accum.add(counts, fill_value=0)
+
+accum
+
+==========================================================================
+
+7장
+
+import networkx as nx
+import matplotlib.pyplot as plt
+
+borders = nx.Graph()
+not_borders1 = nx.DiGraph() # 나중을 위해 만들어 둔다.
+not_borders2 = nx.MultiGraph() # 나중을 위해 만들어 둔다.
+---------------------------------------
+
+
+borders = nx.read_graphml('borders-1.graphml')
+---------------------------------------
+
+
+borders.add_node("Zimbabwe")
+borders.add_nodes_from(["Lugandon", "Zambia", "Portugal", "Kuwait",
+                        "Colombia"]) 
+borders.remove_node("Lugandon")
+borders.add_edge("Zambia", "Zimbabwe")
+borders.add_edges_from([("Uganda", "Rwanda"), ("Uganda", "Kenya"),
+                        ("Uganda", "South Sudan"), 
+                        ("Uganda", "Tanzania"), ("Uganda", "Democratic Republic of the Congo")])
+---------------------------------------
+
+
+len(borders)
+
+
+borders.nodes()
+
+
+borders.node
+
+
+borders.edge
+
+
+borders.edges()[:5]
+
+
+borders.neighbors("Germany")
+
+
+borders.degree("Poland")
+
+
+borders.degree()
+---------------------------------------
+
+
+import pandas
+degrees = pandas.DataFrame(list(borders.degree().items()),
+          columns=("country","degree")).set_index("country")
+degrees.sort("degree").tail(4)
+---------------------------------------
+
+
+nx.clustering(nx.Graph(not_borders1)) # 이제 작동한다. 
+
+
+nx.clustering(borders)
+
+
+nx.clustering(borders, "Lithuania") 
+
+
+list(nx.connected_components(borders))# 작동한다!
+
+
+[len(x) for x in nx.connected_component_subgraphs(borders)]
+
+
+borders.nodes(data=True)
+
+
+borders.edges(data=True)
+---------------------------------------
+
+
+nx.find_cliques(nx.Graph(not_borders1)) # 방향성이 없는 그래프로 바꾸면 사용할 수 있다!
+list(nx.find_cliques(borders))
+
+
+nx.isolates(borders)
+---------------------------------------
+
+
+import community
+partition = community.best_partition(borders)
+partition
+---------------------------------------
+
+
+community.modularity(partition, borders)

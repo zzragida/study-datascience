@@ -1,0 +1,482 @@
+10장
+
+내려받은 예제 파일에 실습을 위한 sap-linregr.py 파일이 있습니다.
+
+sap-linregr.py
+
+import numpy, pandas as pd
+import matplotlib, matplotlib.pyplot as plt
+import sklearn.linear_model as lm
+
+# 데이터를 읽어들인다.
+sap = pd.read_csv("sapXXI.csv").set_index("Date")
+
+# “선형적으로 보이는” 부분을 선택한다.
+sap.index = pd.to_datetime(sap.index)
+sap_linear = sap.ix[sap.index > pd.to_datetime('2009-01-01')]
+
+# 모델을 준비하고 학습시킨다.
+olm = lm.LinearRegression()
+X = numpy.array([x.toordinal() for x in sap_linear.index])[:, numpy.newaxis]
+y = sap_linear['Close']
+olm.fit(X, y)
+
+# 예측을 수행한다.
+yp = [olm.predict(x.toordinal())[0] for x in sap_linear.index]
+
+# 모델을 평가한다.
+olm_score = olm.score(X, y)
+
+# 플로팅 스타일을 선택한다.
+matplotlib.style.use("ggplot")
+
+# 두 데이터셋을 시각화한다.
+plt.plot(sap_linear.index, y)
+plt.plot(sap_linear.index, yp)
+
+# 플롯을 꾸민다.
+plt.title("OLS Regression")
+plt.xlabel("Year")
+plt.ylabel("S&P 500 (closing)")
+plt.legend(["Actual", "Predicted"], loc="lower right")
+plt.annotate("Score=%.3f" % olm_score, 
+             xy=(pd.to_datetime('2010-06-01'), 1900))
+
+plt.savefig("sap-linregr.pdf")
+---------------------------------------
+
+
+내려받은 예제 파일에 실습을 위한 logit-example.py 파일이 있습니다.
+
+logit-example.py 
+
+import pandas as pd
+from sklearn.metrics import confusion_matrix
+import sklearn.linear_model as lm
+
+# 회귀 도구를 생성한다.
+clf = lm.LogisticRegression(C=10.0)
+
+# 데이터시트를 읽어들이고, 등급을 정량화한다.
+grades = pd.read_table("grades.csv")
+labels = ('F', 'D', 'C', 'B', 'A')
+grades["Letter"] = pd.cut(grades["Final score"], [0, 60, 70, 80, 90, 100],
+                          labels=labels)
+X = grades[["Quiz 1", "Quiz 2"]]
+
+# 모델을 학습시키고, score와 혼동 행렬을 출력한다.
+clf.fit(X, grades["Letter"])
+print("Score=%.3f" % clf.score(X, grades["Letter"]))
+cm = confusion_matrix(clf.predict(X), grades["Letter"])
+print(pd.DataFrame(cm, columns=labels, index=labels))
+---------------------------------------
+
+
+import pickle
+with open(“alco2009.pickle”, “wb”) as oFile:
+  pickle.dump(alco2009, oFile)
+---------------------------------------
+
+
+내려받은 예제 파일에 실습을 위한 clusters.py  파일이 있습니다.
+
+
+clusters.py 
+
+import matplotlib, matplotlib.pyplot as plt
+import pickle, pandas as pd
+import sklearn.cluster, sklearn.preprocessing
+
+# NIAAA 데이터 프레임을 앞에서 pickle에 저장해두었다.
+alco2009 = pickle.load(open("alco2009.pickle", "rb"))
+# 주 약칭 데이터를 읽어온다.
+states = pd.read_csv("states.csv", 
+                     names=("State", "Standard", "Postal", "Capital"))
+columns = ["Wine", "Beer"]
+# 클러스터링 객체를 생성하고 모델을 학습시킨다.
+kmeans = sklearn.cluster.KMeans(n_clusters=9)
+kmeans.fit(alco2009[columns])
+alco2009["Clusters"] = kmeans.labels_
+centers = pd.DataFrame(kmeans.cluster_centers_, columns=columns)
+
+# 플로팅 스타일을 선택한다.
+matplotlib.style.use("ggplot")
+
+# 주와 centroid를 플롯에 그린다.
+ax = alco2009.plot.scatter(columns[0], columns[1], c="Clusters", 
+                           cmap=plt.cm.Accent, s=100)
+centers.plot.scatter(columns[0], columns[1], color="red", marker="+", 
+                     s=200, ax=ax)
+
+# 주 약칭을 플롯에 추가한다.
+def add_abbr(state):
+    _ = ax.annotate(state["Postal"], state[columns], xytext=(1, 5), 
+                    textcoords="offset points", size=8,
+                    color="darkslategrey")
+
+alco2009withStates = pd.concat([alco2009, states.set_index("State")], 
+                               axis=1)
+alco2009withStates.apply(add_abbr, axis=1)
+
+# 플롯에 제목을 붙이고 저장한다.
+plt.title("US States Clustered by Alcohol Consumption")
+plt.savefig("clusters.pdf")
+---------------------------------------
+
+
+내려받은 예제 파일에 실습을 위한 rfr.py  파일이 있습니다.
+
+rfr.py
+
+from sklearn.ensemble import RandomForestRegressor
+import pandas as pd, numpy.random as rnd
+import matplotlib, matplotlib.pyplot as plt
+
+# 데이터를 읽어들이고, 데이터셋을 2가지로 무작위 분리한다.
+hed = pd.read_csv('Hedonic.csv')
+selection = rnd.binomial(1, 0.7, size=len(hed)).astype(bool)
+training = hed[selection]
+testing = hed[-selection]
+
+# 랜덤 포레스트 객체와 예측 변수 셋을 생성한다.
+rfr = RandomForestRegressor()
+predictors_tra = training.ix[:, "crim" : "lstat"]
+predictors_tst = testing.ix[:, "crim" : "lstat"]
+
+# 모델을 학습시킨다.
+feature = "medv"
+rfr.fit(predictors_tra, training[feature]) # (1)
+
+# 적절한 플로팅 스타일을 선택한다.
+matplotlib.style.use("ggplot")
+
+# 예측 결과를 플롯에 시각화한다.
+plt.scatter(training[feature], rfr.predict(predictors_tra), c="green",
+            s=50) # (2)
+plt.scatter(testing[feature], rfr.predict(predictors_tst), c="red") # (3)
+plt.legend(["Training data", "Testing data"], loc="upper left")
+plt.plot(training[feature], training[feature], c="blue")
+plt.title("Hedonic Prices of Census Tracts in the Boston Area")
+plt.xlabel("Actual value")
+plt.ylabel("Predicted value")
+plt.savefig("rfr.pdf")
+
+
+================================================
+
+부록. 싱글 스타 연습문제 해답
+
+
+내려받은 예제 파일에 부록 실습을 위한 파이썬 파일이 있습니다.
+
+
+
+solution-hello.py 
+
+
+# 전통을 지키자.
+print("Hello, World!")
+---------------------------------------
+
+
+solution-counter.py 
+
+
+import urllib.request, re
+from collections import Counter
+
+# 사용자와 인터넷에게 말을 걸자.
+url = input("Enter the URL: ")
+try:
+    page = urllib.request.urlopen(url)
+except:
+    print("Cannot open %s" % url)
+    quit()
+
+# 페이지를 읽고 부분적으로 정규화한다.
+doc = page.read().decode().lower()
+
+# 텍스트를 단어로 자른다.
+words = re.findall(r"\w+", doc)
+
+# 카운터를 만들고 답을 출력한다.
+print(Counter(words).most_common(10))
+---------------------------------------
+
+
+
+solution-broken_link.py
+
+
+import urllib.request, urllib.parse
+import bs4 as BeautifulSoup
+
+# 사용자와 인터넷에게 말을 건다.
+base = input("Enter the URL: ")
+try:
+    page = urllib.request.urlopen(base)
+except:
+    print("Cannot open %s" % base)
+    quit()
+
+# soup을 준비한다.
+soup = BeautifulSoup.BeautifulSoup(page)
+
+# link를 (name, url)로 구성된 tuple로 추출한다.
+links = [(link.string, link["href"]) 
+         for link in soup.find_all("a")
+         if link.has_attr("href")]
+
+# 각 링크를 연다.
+broken = False
+for name, url in links:
+    # base와 대상 link를 결합한다.
+    dest = urllib.parse.urljoin(base, url)
+    try:
+        page = urllib.request.urlopen(dest)
+        page.close()
+    except:
+        print("Link \"%s\" to \"%s\" is probably broken." % (name, dest))
+        broken = True
+
+# 좋은 소식!
+if not broken:
+    print("Page %s does not seem to have broken links." % base)        
+---------------------------------------
+
+
+solution-mysql_indexer.sql
+CREATE TABLE IF NOT EXISTS indexer(id INT PRIMARY KEY AUTO_INCREMENT, 
+                                   ts TIMESTAMP,
+                                   word TINYTEXT, 
+                                   position INT, 
+                                   pos VARCHAR(8));
+
+
+---------------------------------------
+
+
+solution-mysql_indexer.py 
+
+
+import nltk, pymysql
+
+infilename = input("Enter the name of the file to index: ")
+
+# 여러분의 MySQL 설정에 맞게 아래 라인을 수정하라.
+conn = pymysql.connect(user="dsuser", passwd="badpassw0rd", db="dsbd")
+cur = conn.cursor()
+
+QUERY = "INSERT INTO indexer (word,position,pos) VALUES "
+wpt = nltk.WordPunctTokenizer()
+
+offset = 1
+with open(infilename) as infile:
+    # 텍스트를 한줄 한줄씩 점진적으로 처리하자.
+    # 어차피 한 단어가 두 줄에 걸쳐 있지는 않다! 
+    for text in infile:
+        # 단어를 토큰화하고 품사 태그를 붙인다.
+        pieces = enumerate(nltk.pos_tag(wpt.tokenize(text)))
+        
+        # 쿼리를 만든다. 이스케이프 문자 처리하는 것을 잊지 말자! 
+        words = ["(\"%s\",%d,\"%s\")" % (conn.escape_string(w), 
+                                         i + offset, 
+                                         conn.escape_string(pos)) 
+                 for (i, (w, pos)) in pieces]
+        
+        # 쿼리를 실행한다.
+        if words:
+            cur.execute(QUERY + ','.join(words))
+
+            # 단어 포인터를 업데이트한다.
+            offset += len(words)
+
+# 변경사항을 등록한다.
+conn.commit()
+conn.close()
+---------------------------------------
+
+
+
+solution-difference.py 
+
+
+import numpy as np
+
+# 테스트용 데이터를 준비한다.
+array = np.random.binomial(5, 0.5, size=100)
+
+# 슬라이싱과 브로드캐스팅을 사용해 미분한다!
+diff = array[1:] - array[:-1]
+---------------------------------------
+
+
+
+solution-lynx.py 
+
+
+import os, pandas as pd
+import urllib.request
+
+# 상수를 정의한다.
+SRC_HOST = "vincentarelbundock.github.io"
+FILE = "lynx.csv"
+SRC_NAME = SRC_HOST + "/Rdatasets/csv/datasets/" + FILE
+CACHE = "cache"
+DOC = "doc"
+
+# 필요한 경우 디렉토리를 준비해둔다.
+if not os.path.isdir(CACHE):
+    os.mkdir(CACHE)
+if not os.path.isdir(DOC):
+    os.mkdir(DOC)
+
+# 파일이 캐시되었는지 확인한다. 그렇지 않다면 캐시 처리한다.
+if not os.path.isfile(CACHE + FILE):
+    try:
+        src = urllib.request.urlopen(SRC_NAME)
+        lynx = pd.read_csv(src)
+    except:
+        print("Cannot access %f." % SRC_NAME)
+        quit()
+    # 데이터 프레임을 생성한다.
+    lynx.to_csv(CACHE + FILE)
+else:
+    lynx = pd.read_csv(CACHE + FILE)
+
+# decade 열을 추가한다.
+lynx["decade"] = (lynx['time'] / 10).round() * 10
+
+# 데이터를 집계하고 정렬한다.
+by_decade = lynx.groupby("decade").sum()
+by_decade = by_decade.sort_values(by="lynx", ascending=False)
+
+# 결과를 저장한다.
+by_decade["lynx"].to_csv(DOC + FILE)
+---------------------------------------
+
+
+
+solution-centrality.py
+
+
+import networkx as nx, community
+import pandas as pd
+
+# 네트워크를 임포트한다.
+G = nx.read_adjlist(open("soc-Epinions1.txt", "rb"))
+
+# 커뮤니티 구조를 추출하고 데이터 시리즈에 저장한다.
+partition = pd.Series(community.best_partition(G))
+
+# 10번째로 가장 큰 커뮤니티의 인덱스를 찾는다.
+top10 = partition.value_counts().index[9]
+
+# 10번째로 큰 커뮤니티를 추출한다.
+# 노드 라벨이 문자열로 되어 있다는 것을 기억하자!
+subgraph = partition[partition == top10].index.values.astype('str')
+F = G.subgraph(subgraph)
+
+# 네트워크 지표를 계산한다.
+df = pd.DataFrame()
+df["degree"] = pd.Series(nx.degree_centrality(F))
+df["closeness"] = pd.Series(nx.closeness_centrality(F))
+df["betweenness"] = pd.Series(nx.betweenness_centrality(F))
+df["eigenvector"] = pd.Series(nx.eigenvector_centrality(F))
+df["clustering"] = pd.Series(nx.clustering(F))
+
+# 상관성을 계산한다.
+print(df.corr())
+---------------------------------------
+
+
+
+solution-states_pie.py 
+
+
+import pandas as pd
+import matplotlib, matplotlib.pyplot as plt
+
+def initial(word):
+    return word[0]
+
+# 주 이름을 읽어들인다(데이터 출처는 어디든 좋다!).
+states = pd.read_csv("states2.csv", 
+                     names=("State", "Standard", "Postal", "Capital"))
+
+# 플롯 스타일을 설정한다.
+matplotlib.style.use("ggplot")
+
+# 플로팅
+plt.axes(aspect=1)
+states.set_index('Postal').groupby(initial).count()['Standard'].plot.pie()
+plt.title("States by the First Initial")
+plt.ylabel("")
+
+plt.savefig("states-pie.pdf")
+---------------------------------------
+
+
+
+solution-sap.py 
+
+
+import pandas as pd
+from scipy.stats import pearsonr
+
+# 데이터를 읽어들인다.
+sap = pd.read_csv("sapXXII.csv").set_index("Date")
+
+# 통계 지표를 계산하고 출력한다.
+print("Mean:", sap["Close"].mean())
+print("Standard deviation:", sap["Close"].std())
+print("Skewness:", sap["Close"].skew())
+print("Correlation:\n", sap[["Close", "Volume"]].corr())
+_, p = pearsonr(sap["Close"], sap["Volume"])
+print("p-value:", p)
+---------------------------------------
+
+
+solution-mosn.py 
+
+
+import pandas as pd, numpy as np
+import sklearn.cluster, sklearn.preprocessing
+import matplotlib, matplotlib.pyplot as plt
+
+# 데이터를 읽어들인다.
+mosn = pd.read_csv('mosn.csv', thousands=',',
+                   names=('Name', 'Description', 'Date', 'Registered Users',
+                          'Registration', 'Alexa Rank'))
+columns = ['Registered Users', 'Alexa Rank']
+
+# 데이터가 없거나 0이 있는 행을 제거한다.
+good = mosn[np.log(mosn[columns]).notnull().all(axis=1)].copy()
+
+# 클러스터링을 수행한다.
+kmeans = sklearn.cluster.KMeans()
+kmeans.fit(np.log(good[columns]))
+good["Clusters"] = kmeans.labels_
+
+# 어느 클러스터가 페이스북인가?
+fb = good.set_index('Name').ix['Facebook']['Clusters']
+
+# 적당한 플로팅 스타일을 선택한다.
+matplotlib.style.use("ggplot")
+
+# 결과를 출력한다.
+ax = good.plot.scatter(columns[0], columns[1], c="Clusters", 
+                       cmap=plt.cm.Accent, s=100)
+plt.title("Massive online social networking sites")
+plt.xscale("log")
+plt.yscale("log")
+
+# 가장 잘 나가는 서비스의 명칭을 표기한다.
+def add_abbr(site):
+    if site['Clusters'] == fb:
+        _ = ax.annotate(site["Name"], site[columns], xytext=(1, 5), 
+                        textcoords="offset points", size=8,
+                        color="darkslategrey")
+good.apply(add_abbr, axis=1)
+
+plt.savefig("mosn.png")
